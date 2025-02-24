@@ -1,24 +1,36 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { WiDaySunny, WiRain, WiCloudy } from "react-icons/wi";
 import axios from "axios";
 import dayImage from './assets/dayImage.png'
 import nightImage from './assets/nightImage.jpeg'
+import clearDay from '/clear-sky.jpg';
+import clearNight from '/clear-night-sky.jpg';
+import cloudyDay from '/cloudy-day.jpg';
+import cloudyNight from '/cloudy-night.jpg';
+import rainyDay from '/rainy-day.jpg';
+import rainyNight from '/rainy-night.jpg';
+import snowyDay from '/snowy-day.jpg';
+import snowyNight from '/snowy-night.jpg';
+import foggyDay from '/foggy-day.jpg';
+import foggyNight from '/foggy-night.jpg';
+import thunderstormDay from '/thunderstorm-day.jpg';
+import thunderstormNight from '/thunderstorm-night.jpg';
+import defaultImage from '/default.jpg';
 
+const apiKey = import.meta.env.VITE_WEATHER_API_KEY;
 
-const Weather_API_KEY = "ec013a24e043386d271dc0ea1517259e";
 
 const WeatherApp = () => {
   const [weather, setWeather] = useState(null);
-  const [city, setCity] = useState("Tirana");
+  const [city, setCity] = useState('');
 
   useEffect(() => {
     fetchWeather(city);
-  }, [city]);
+  }, []);
 
   const fetchWeather = async (city) => {
     try {
-      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${Weather_API_KEY}&units=metric`;
+      const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
       const response = await axios.get(url);
       setWeather(response.data);
     } catch (error) {
@@ -26,22 +38,25 @@ const WeatherApp = () => {
     }
   };
 
-  const getBackgroundImage = (weather) => {
-    if (!weather || !weather.weather) return "";
-    switch (weather?.weather?.[0].main) {
-      case "Clear":
-        return "/sunny.jpg";
-      case "Rain":
-        return "/rainy.jpg";
-      case "Clouds":
-        return "/cloudy.jpg";
-      case "Snow":
-        return "/snowy.jpg";
-      default:
-        return "/default.jpg";
-    }
+  const getBackgroundImage = (weather, isDayTime) => {
+    if (!weather || !weather.weather) return defaultImage;
+  
+    const condition = weather.weather[0].main;
+  
+    const backgrounds = {
+      Clear: isDayTime ? clearDay : clearNight,
+      Clouds: isDayTime ? cloudyDay : cloudyNight,
+      Rain: isDayTime ? rainyDay : rainyNight,
+      Snow: isDayTime ? snowyDay : snowyNight,
+      Fog: isDayTime ? foggyDay : foggyNight,
+      Mist: isDayTime ? foggyDay : foggyNight,
+      Thunderstorm: isDayTime ? thunderstormDay : thunderstormNight,
+    };
+  
+    return backgrounds[condition] || defaultImage;
   };
-
+  
+  const onClearCity = () => setCity('');
   const currentTime = new Date().getTime() / 1000;
   const sunrise = weather?.sys?.sunrise;
   const sunset = weather?.sys?.sunset;
@@ -69,18 +84,7 @@ const WeatherApp = () => {
         alignItems: "center",
       }}
     >
-
-
-      {weather?.weather[0].main === "Rain" && (
-        <div className="rain-container">
-          {Array.from({ length: 50 }).map((_, i) => (
-            <div key={i} className="raindrop"></div>
-          ))}
-        </div>
-      )}
-
-
-      <div className="bg-white bg-opacity-20 rounded-lg shadow-lg p-8 flex flex-col items-center text-white">
+      <div className={`bg-white bg-opacity-20 rounded-lg shadow-lg p-8 flex flex-col items-center ${isDayTime ? 'text-white' : 'black-text'}`}>
         <h1 className="text-3xl font-bold mb-8">Weather App</h1>
         <input
           type="text"
@@ -89,6 +93,7 @@ const WeatherApp = () => {
           placeholder="Search the city..."
           className="p-2 rounded text-black mb-4"
         />
+        <button onClick={onClearCity}>X</button>
         <button
           onClick={() => fetchWeather(city)}
           className="px-4 py-2 bg-white text-indigo-600 rounded shadow-lg hover:bg-gray-200"
